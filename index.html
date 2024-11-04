@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>משחק זיכרון לילדים</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .card {
+      width: 80px;
+      height: 80px;
+      background-color: #2196f3;
+      margin: 8px;
+      display: inline-block;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.3s;
+      transform-style: preserve-3d;
+    }
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+    .front, .back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+    }
+    .front {
+      background-color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 36px;
+      transform: rotateY(180deg);
+    }
+    .back {
+      background-color: #2196f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 36px;
+      content: "?";
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        width: 60px;
+        height: 60px;
+        margin: 6px;
+      }
+      .front, .back {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div class="container mx-auto my-10 p-6 bg-white rounded-lg shadow-md">
+    <h1 class="text-3xl font-bold mb-6">משחק זיכרון לילדים</h1>
+    <div class="mb-6">
+      <label for="playerName" class="block font-medium mb-2">שם שחקן:</label>
+      <input type="text" id="playerName" class="border rounded px-3 py-2 w-full" placeholder="הכנס את שמך">
+    </div>
+    <div class="mb-6">
+      <label for="difficulty" class="block font-medium mb-2">רמת קושי:</label>
+      <select id="difficulty" class="border rounded px-3 py-2 w-full">
+        <option value="easy">קל</option>
+        <option value="medium">בינוני</option>
+        <option value="hard">קשה</option>
+      </select>
+    </div>
+    <div id="game-board" class="flex flex-wrap justify-center"></div>
+    <div class="mt-6 text-center">
+      <p>ניקוד: <span id="score">0</span></p>
+      <button onclick="startGame()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">התחל משחק</button>
+    </div>
+  </div>
+
+  <script>
+    const symbols = ['🍎', '🍌', '🍇', '🍓', '🍊', '🍋', '🍐', '🍒', '🍉', '🍍', '🍔', '🍕', '🌭', '🌮', '🍿', '🍩'];
+    let score = 0;
+
+    function startGame() {
+      const playerName = document.getElementById('playerName').value || 'שחקן';
+      const difficultySelect = document.getElementById('difficulty');
+      const difficulty = difficultySelect.value;
+      const gameBoard = document.getElementById('game-board');
+      gameBoard.innerHTML = '';
+
+      let cardCount;
+      let cardPairs;
+      switch (difficulty) {
+        case 'easy':
+          cardCount = 16;
+          cardPairs = 8;
+          break;
+        case 'medium':
+          cardCount = 24;
+          cardPairs = 12;
+          break;
+        case 'hard':
+          cardCount = 32;
+          cardPairs = 16;
+          break;
+      }
+
+      const cards = [];
+      for (let i = 0; i < cardPairs; i++) {
+        cards.push(symbols[i], symbols[i]);
+      }
+      cards.sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < cards.length; i++) {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.innerHTML = `
+          <div class="back">?</div>
+          <div class="front">${cards[i]}</div>
+        `;
+        card.addEventListener('click', () => flipCard(card));
+        gameBoard.appendChild(card);
+      }
+
+      document.getElementById('score').textContent = '0';
+    }
+
+    let firstCard = null;
+    let secondCard = null;
+    let isLocked = false;
+
+    function flipCard(card) {
+      if (isLocked) return;
+      card.classList.add('flipped');
+      if (!firstCard) {
+        firstCard = card;
+        firstCard.firstElementChild.textContent = '?';
+        firstCard.lastElementChild.textContent = firstCard.lastElementChild.textContent;
+      } else {
+        secondCard = card;
+        secondCard.firstElementChild.textContent = '?';
+        secondCard.lastElementChild.textContent = secondCard.lastElementChild.textContent;
+        isLocked = true;
+        setTimeout(() => {
+          if (firstCard.lastElementChild.textContent === secondCard.lastElementChild.textContent) {
+            firstCard.style.visibility = 'hidden';
+            secondCard.style.visibility = 'hidden';
+            updateScore();
+          } else {
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
+            firstCard.firstElementChild.textContent = '?';
+            secondCard.firstElementChild.textContent = '?';
+          }
+          firstCard = null;
+          secondCard = null;
+          isLocked = false;
+        }, 1000);
+      }
+    }
+
+    function updateScore() {
+      score += 1;
+      document.getElementById('score').textContent = score;
+    }
+  </script>
+</body>
+</html>
